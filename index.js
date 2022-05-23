@@ -31,7 +31,16 @@ const run = async() =>{
         const appointmentsCollection = client.db("doctorsportal2").collection("appointments2");
         // console.log('DB connected successfully.')
 
-        app.post("/appointment",async(req,res)=>{
+        app.get("/appointment", async(req,res)=>{
+            const email = req.query.email;
+            
+            const query = {email: email};
+            console.log(query);
+            const cursor = appointmentsCollection.find(query);
+            const appointments = await cursor.toArray();
+            res.json(appointments);
+        })
+        app.post("/appointment", async(req,res)=>{
             // console.log('enter here');
             // console.log(req.body);
             const appointmentInformation = req.body;
