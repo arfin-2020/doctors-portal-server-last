@@ -29,6 +29,7 @@ const run = async() =>{
     try{
         await client.connect();
         const appointmentsCollection = client.db("doctorsportal2").collection("appointments2");
+        const usersCollection = client.db("doctorsportal2").collection("users");
         // console.log('DB connected successfully.')
 
         app.get("/appointment", async(req,res)=>{
@@ -46,7 +47,16 @@ const run = async() =>{
             const appointmentInformation = req.body;
             const result = await appointmentsCollection.insertOne(appointmentInformation)
             .then(result=>{
-                console.log(`A document was inserted with the _id: ${result.insertedId}`);
+                // console.log(`A document was inserted with the _id: ${result.insertedId}`);
+                res.json(result);
+            })
+        })
+        app.post('/users',async(req,res)=>{
+            const users = req.body;
+            
+            const result = await usersCollection.insertOne(users)
+            .then(result=>{
+                console.log(users)
                 res.json(result);
             })
         })
