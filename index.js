@@ -51,14 +51,27 @@ const run = async() =>{
                 res.json(result);
             })
         })
+
+
         app.post('/users',async(req,res)=>{
             const users = req.body;
-            
             const result = await usersCollection.insertOne(users)
             .then(result=>{
-                console.log(users)
+                // console.log(users)
                 res.json(result);
             })
+        })
+
+
+        app.put('/users',async(req,res)=>{
+            const user = req.body;
+            // console.log("put-------", user)
+            const filter = {email: user.email};
+            const options = {upsert: true};
+            console.log(options)
+            const updateDoc = {$set: user};
+            const result = await usersCollection.updateOne(filter, updateDoc, options);
+            res.json(result);
         })
 
 
