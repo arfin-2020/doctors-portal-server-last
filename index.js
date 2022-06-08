@@ -65,13 +65,23 @@ const run = async() =>{
 
         app.put('/users',async(req,res)=>{
             const user = req.body;
-            // console.log("put-------", user)
+            
             const filter = {email: user.email};
             const options = {upsert: true};
             console.log(options)
             const updateDoc = {$set: user};
             const result = await usersCollection.updateOne(filter, updateDoc, options);
             res.json(result);
+        })
+
+        app.put('users/admin',async(req,res)=>{
+            const user =  req.body;
+            console.log("put-------", user)
+            const filter = {email: user.email};
+            const updateDoc = {$set:{role: 'admin'}};
+            const result = await usersCollection.updateOne(filter,updateDoc);
+            res.json(result);
+
         })
 
 
