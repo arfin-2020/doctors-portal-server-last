@@ -1,3 +1,4 @@
+var jwt = require('jsonwebtoken');
 const express = require("express");
 require("dotenv").config();
 const { MongoClient, ServerApiVersion } = require("mongodb");
@@ -25,22 +26,64 @@ const client = new MongoClient(uri, {
 });
 // console.log(uri);
 
+
+function verifyToken(req,res,next){
+    console.log('ABC');
+    const authorization = req.headers.authorization;
+    // console.log(authorization)
+    if(!authorization){
+        return res.status(401).send({message: 'UnAuthorize Access'})
+    }
+    const token = authorization.split(' ')[1];
+
+    jwt.verify(token, process.env.SCREAT_TOKEN,function(err, decoded){
+        if(err){
+            return res.status(403).send({message: "Forbidden access"})
+        }
+        console.log(decoded);
+        next();
+    })
+}
+
 const run = async() =>{
     try{
         await client.connect();
         const appointmentsCollection = client.db("doctorsportal2").collection("appointments2");
         const usersCollection = client.db("doctorsportal2").collection("users");
+        const doctorsCollection = client.db("doctorsportal2").collection("doctors");
         // console.log('DB connected successfully.')
 
-        app.get("/appointment", async(req,res)=>{
+        app.get("/appointment",async(req,res)=>{
             const email = req.query.email;
+            const authorization = req.headers.authorization;
+            // console.log("from appointment", authorization)
             const date = new Date(req.query.date).toLocaleDateString();
+            // console.log(date)
             const query = { email: email, date:date};
             // console.log(query);
             const cursor = appointmentsCollection.find(query);
             const appointments = await cursor.toArray();
             res.json(appointments);
         })
+
+        app.get('/users',async(req,res)=>{
+            const users = await usersCollection.find().toArray();
+            res.send(users)
+        })
+
+        app.get('/users/:email', async(req, res)=>{
+            const email = req.params.email;
+            const query = {email: email};
+            const user = await usersCollection.findOne(query);
+            console.log(user)
+            let isAdmin = false;
+            if(user?.role === 'admin'){
+                isAdmin = true
+            }
+            res.send({admin: isAdmin})
+        } )
+
+
         app.post("/appointment", async(req,res)=>{
             // console.log('enter here');
             // console.log(req.body);
@@ -65,23 +108,33 @@ const run = async() =>{
 
         app.put('/users',async(req,res)=>{
             const user = req.body;
-            
             const filter = {email: user.email};
             const options = {upsert: true};
-            console.log(options)
+            //console.log(options)
             const updateDoc = {$set: user};
             const result = await usersCollection.updateOne(filter, updateDoc, options);
             res.json(result);
         })
 
-        app.put('users/admin',async(req,res)=>{
+        app.put('/users/admin',async(req,res)=>{
             const user =  req.body;
-            console.log("put-------", user)
+            console.log("put-------", req.headers)
             const filter = {email: user.email};
+            
             const updateDoc = {$set:{role: 'admin'}};
             const result = await usersCollection.updateOne(filter,updateDoc);
             res.json(result);
 
+        })
+        app.get('/doctor',async(req,res)=>{
+            const doctors = await doctorsCollection.find().toArray();
+            res.send(doctors);
+        })
+        app.post('/doctor',async(req,res)=>{
+            const doctor = req.body;
+            console.log(doctor)
+            const result = await doctorsCollection.insertOne(doctor);
+            res.send(result);
         })
 
 
